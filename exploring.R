@@ -97,6 +97,68 @@ ggplot(as.data.frame(samples), aes(x, y)) + geom_hex() + coord_equal()
 
 
 
+# torus -------------------------------------------------------------------
+
+p <- mp("(x^2 + y^2 + z^2 + 2^2 - 1^2)^2 - 4 2^2 (x^2 + y^2)")
+(samps <- rvnorm(2000, p, .01, "tibble"))
+
+rvnorm(2000, p, sd = .1, code_only = TRUE)
+# saved in torus.stan
+
+compiled_model <- rstan::stan_model("torus.stan")
+
+cores <- parallel::detectCores()
+chains <- cores * 2
+warmup <- 500
+n <- 2000
+
+
+samples <- rstan::sampling(
+  "object" = compiled_model,
+  "data" = list("si" = .1),
+  "chains" = 8L,
+  "iter" = n + warmup,
+  "warmup" = warmup,
+  "control" = list("adapt_delta" = .999, "max_treedepth" = 20L),
+  "cores" = cores
+)
+
+library("plotly")
+
+plot_ly(
+  as.data.frame(samples), 
+  x = ~x, y = ~y, z = ~z, 
+  type = "scatter3d", mode = "markers",
+  marker = list(size = 1, color = "black")
+)
+
+
+
+
+
+# smaller sigma
+samples <- rstan::sampling(
+  "object" = compiled_model,
+  "data" = list("si" = .01),
+  "chains" = 8L,
+  "iter" = n + warmup,
+  "warmup" = warmup,
+  "control" = list("adapt_delta" = .999, "max_treedepth" = 20L),
+  "cores" = cores
+)
+
+plot_ly(
+  as.data.frame(samples), 
+  x = ~x, y = ~y, z = ~z, 
+  type = "scatter3d", mode = "markers",
+  marker = list(size = 1, color = "black")
+)
+
+
+
+
+
+
 
 
 
