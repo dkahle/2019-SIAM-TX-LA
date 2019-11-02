@@ -8,4 +8,4 @@ output:
 knitr::opts_chunk$set(echo = TRUE, comment = "#", collapse = TRUE)
 ```
 
-This repository contains the material from the talk _Exploring Varieties - A Practical Guide_ from [SIAM's Texas-Louisiana Section 2019 conference](http://faculty.smu.edu/sxu/SIAMTXLA19/index.html).
+This repository contains the material from the talk _Exploring Varieties: A Practical Guide_ from [SIAM's Texas-Louisiana Section 2019 conference](http://faculty.smu.edu/sxu/SIAMTXLA19/index.html).
