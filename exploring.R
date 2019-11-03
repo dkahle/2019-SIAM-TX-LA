@@ -197,3 +197,32 @@ plot_ly(
 
 
 
+# multi -------------------------------------------------------------------
+
+p <- mp(c("x^2 + y^2 + z^2 - 1", "z"))
+
+rvnorm(2000, p, sd = .1, code_only = TRUE)
+
+multi_model <- rstan::stan_model("multi.stan")
+
+samples <- rstan::sampling(
+  "object" = multi_model,
+  "data" = list("si" = .05),
+  "chains" = chains, "iter" = n + warmup, "warmup" = warmup, "cores" = cores,
+  "control" = list("adapt_delta" = .999, "max_treedepth" = 20L)
+)
+
+ggplot(as.data.frame(samples), aes(x, z)) +
+  geom_point()
+
+plot_ly(
+  as.data.frame(samples), 
+  x = ~x, y = ~y, z = ~z, 
+  type = "scatter3d", mode = "markers",
+  marker = list(size = 1, color = "black")
+)
+
+
+
+
+
