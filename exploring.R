@@ -2,7 +2,6 @@
 
 # load libraries ------------------------------------------------------------
 
-library("parallel"); options(mc.cores = detectCores())
 library("rstan"); rstan_options(auto_write = TRUE)
 library("algstat")
 
@@ -36,6 +35,16 @@ ggplot(samps, aes(x, y, color = g)) +
   scale_color_gradient2() +
   coord_equal()
 
+ggplot(samps, aes(x, y)) + geom_hex() + coord_equal()
+
+
+
+
+
+
+
+
+
 
 
 # manual example ----------------------------------------------------------
@@ -45,10 +54,10 @@ p <- mp("(x^2 + y^2)^2 - 2 (x^2 - y^2)")
 rvnorm(2000, p, sd = .1, code_only = TRUE)
 # saved in lemniscate.stan
 
-compiled_model <- rstan::stan_model("lemniscate.stan")
+lemniscate_model <- rstan::stan_model("lemniscate.stan")
 
 cores <- parallel::detectCores()
-chains <- cores * 2
+chains <- cores
 warmup <- 500
 n <- 2000
 
@@ -56,13 +65,10 @@ n <- 2000
 
 
 samples <- rstan::sampling(
-  "object" = compiled_model,
+  "object" = lemniscate_model,
   "data" = list("si" = .1),
-  "chains" = 8L,
-  "iter" = n + warmup,
-  "warmup" = warmup,
-  "control" = list("adapt_delta" = .999, "max_treedepth" = 20L),
-  "cores" = cores
+  "chains" = chains, "iter" = n + warmup, "warmup" = warmup, "cores" = cores,
+  "control" = list("adapt_delta" = .999, "max_treedepth" = 20L)
 )
 
 str(samples, 2)
@@ -73,24 +79,40 @@ str(df)
 head(df)
 
 # graphics
-ggplot(df, aes(x, y)) + geom_point()
+ggplot(df, aes(x, y)) + geom_point() + coord_equal()
+ggplot(as.data.frame(samples), aes(x, y)) + geom_hex() + coord_equal()
 
 
 
-
+# smaller sigma
 samples <- rstan::sampling(
-  "object" = compiled_model,
-  "data" = list("si" = .02),
-  "chains" = 8L,
-  "iter" = n + warmup,
-  "warmup" = warmup,
-  "control" = list("adapt_delta" = .999, "max_treedepth" = 20L),
-  "cores" = cores
+  "object" = lemniscate_model,
+  "data" = list("si" = .01),
+  "chains" = chains, "iter" = n + warmup, "warmup" = warmup, "cores" = cores,
+  "control" = list("adapt_delta" = .999, "max_treedepth" = 20L)
 )
 
 # graphics
 ggplot(as.data.frame(samples), aes(x, y)) + geom_point() + coord_equal()
 ggplot(as.data.frame(samples), aes(x, y)) + geom_hex() + coord_equal()
+ggplot(as.data.frame(samples), aes(x, y)) + geom_bin2d(bins = 100) + coord_equal()
+
+ggplot(as.data.frame(samples), aes(x, y)) + 
+  stat_density2d(
+    aes(fill = stat(density)), h = c(.2, .2),
+    contour = FALSE, geom = "raster", n = 251
+  ) +
+  coord_equal() +
+  xlim(-2, 2) + ylim(-1, 1)
+
+ggplot(as.data.frame(samples), aes(x, y)) + 
+  stat_density2d(
+    aes(fill = stat(density)), h = c(.2, .2),
+    contour = FALSE, geom = "raster", n = 251
+  ) +
+  geom_point(color = "white", alpha = .2, size = .15) +
+  coord_equal() +
+  xlim(-2, 2) + ylim(-1, 1)
 
 
 
@@ -100,27 +122,17 @@ ggplot(as.data.frame(samples), aes(x, y)) + geom_hex() + coord_equal()
 # torus -------------------------------------------------------------------
 
 p <- mp("(x^2 + y^2 + z^2 + 2^2 - 1^2)^2 - 4 2^2 (x^2 + y^2)")
-(samps <- rvnorm(2000, p, .01, "tibble"))
 
 rvnorm(2000, p, sd = .1, code_only = TRUE)
 # saved in torus.stan
 
-compiled_model <- rstan::stan_model("torus.stan")
-
-cores <- parallel::detectCores()
-chains <- cores * 2
-warmup <- 500
-n <- 2000
-
+torus_model <- rstan::stan_model("torus.stan")
 
 samples <- rstan::sampling(
-  "object" = compiled_model,
+  "object" = torus_model,
   "data" = list("si" = .1),
-  "chains" = 8L,
-  "iter" = n + warmup,
-  "warmup" = warmup,
-  "control" = list("adapt_delta" = .999, "max_treedepth" = 20L),
-  "cores" = cores
+  "chains" = chains, "iter" = n + warmup, "warmup" = warmup, "cores" = cores,
+  "control" = list("adapt_delta" = .999, "max_treedepth" = 20L)
 )
 
 library("plotly")
@@ -138,13 +150,10 @@ plot_ly(
 
 # smaller sigma
 samples <- rstan::sampling(
-  "object" = compiled_model,
+  "object" = torus_model,
   "data" = list("si" = .01),
-  "chains" = 8L,
-  "iter" = n + warmup,
-  "warmup" = warmup,
-  "control" = list("adapt_delta" = .999, "max_treedepth" = 20L),
-  "cores" = cores
+  "chains" = chains, "iter" = n + warmup, "warmup" = warmup, "cores" = cores,
+  "control" = list("adapt_delta" = .999, "max_treedepth" = 20L)
 )
 
 plot_ly(
@@ -159,6 +168,30 @@ plot_ly(
 
 
 
+
+
+# whitney umbrella --------------------------------------------------------
+
+p <- mp("x^2 - y^2 z")
+
+rvnorm(2000, p, sd = .1, w = 5, code_only = TRUE)
+# saved in whitney.stan
+
+whitney_model <- rstan::stan_model("whitney.stan")
+
+samples <- rstan::sampling(
+  "object" = whitney_model,
+  "data" = list("si" = .05),
+  "chains" = chains, "iter" = n + warmup, "warmup" = warmup, "cores" = cores,
+  "control" = list("adapt_delta" = .999, "max_treedepth" = 20L)
+)
+
+plot_ly(
+  as.data.frame(samples), 
+  x = ~x, y = ~y, z = ~z, 
+  type = "scatter3d", mode = "markers",
+  marker = list(size = 1, color = "black")
+)
 
 
 
