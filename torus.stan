@@ -14,5 +14,5 @@ transformed parameters {
 } 
       
 model {
-  target += normal_lpdf(0.00 | g, ndg*si);
+  target += normal_lpdf(0.00 | g/ndg, si);
 }
